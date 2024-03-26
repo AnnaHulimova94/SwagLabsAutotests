@@ -1,4 +1,4 @@
-package readConfig;
+package util;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -12,6 +12,10 @@ public interface ConfigProvider {
 
     Config config = readConfig();
 
+    String urlLoginPage = config.getString("url_login_page");
+
+    String urlInventoryPage = config.getString("url_inventory_page");
+
     String userStandard = config.getString("userParams.user_standard.status");
 
     String userLockedOut = config.getString("userParams.user_locked_out.status");
@@ -23,6 +27,10 @@ public interface ConfigProvider {
     String userError = config.getString("userParams.user_error.status");
 
     String userVisual = config.getString("userParams.user_visual.status");
+
+    String messageUserIsRequired = config.getString("messages.user_is_required");
+
+    String messageUserIsLockedOut = config.getString("messages.user_is_locked_out");
 
     Map<String, User> userMap = getUserMap();
 
