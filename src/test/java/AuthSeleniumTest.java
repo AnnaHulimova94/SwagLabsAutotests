@@ -1,5 +1,3 @@
-package authTests;
-
 import util.CustomConditions;
 import entity.User;
 import org.junit.Assert;
@@ -14,6 +12,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import util.ConfigProvider;
 
 import java.time.Duration;
+import java.util.Map;
 
 public class AuthSeleniumTest {
 
@@ -35,14 +34,25 @@ public class AuthSeleniumTest {
         test_auth_with_locked_out_user(new EdgeDriver());
     }
 
+    @Test
+    public void test_auth_performance() {
+        Map<String, User> userMap = ConfigProvider.getUserMap();
+        userMap.remove(ConfigProvider.userLockedOut);
+        userMap.remove(ConfigProvider.userPerformanceGlitch);
+
+        userMap.forEach((s, user) -> {
+            test_auth_performance(new ChromeDriver(), user);
+            test_auth_performance(new EdgeDriver(), user);
+        });
+    }
+
     private void test_auth_with_locked_out_user(WebDriver driver) {
         driver.get(ConfigProvider.urlLoginPage);
         new WebDriverWait(driver, Duration.ofSeconds(10)).until(CustomConditions.documentStateIsReady());
 
         setLoginData(driver, ConfigProvider.userMap.get(ConfigProvider.userLockedOut));
 
-        WebElement loginButton = driver.findElement(By.id("login-button"));
-        loginButton.click();
+        driver.findElement(By.id("login-button")).click();
 
         WebElement errorMessage = waitUntilElementIsPresent(driver, By.xpath("//div[@class='error-message-container error']"));
         Assert.assertEquals(ConfigProvider.messageUserIsLockedOut, errorMessage.getText());
@@ -56,8 +66,7 @@ public class AuthSeleniumTest {
         driver.get(ConfigProvider.urlLoginPage);
         new WebDriverWait(driver, Duration.ofSeconds(10)).until(CustomConditions.documentStateIsReady());
 
-        WebElement loginButton = driver.findElement(By.id("login-button"));
-        loginButton.click();
+        driver.findElement(By.id("login-button")).click();
 
         WebElement errorMessage = waitUntilElementIsPresent(driver, By.xpath("//div[@class='error-message-container error']"));
         Assert.assertEquals(ConfigProvider.messageUserIsRequired, errorMessage.getText());
@@ -73,10 +82,31 @@ public class AuthSeleniumTest {
 
         setLoginData(driver, ConfigProvider.userMap.get(ConfigProvider.userStandard));
 
-        WebElement loginButton = driver.findElement(By.id("login-button"));
-        loginButton.click();
+        driver.findElement(By.id("login-button")).click();
 
         Assert.assertEquals(ConfigProvider.urlInventoryPage, driver.getCurrentUrl());
+
+        driver.quit();
+    }
+
+    private void test_auth_performance(WebDriver driver, User user) {
+        driver.get(ConfigProvider.urlLoginPage);
+        new WebDriverWait(driver, Duration.ofSeconds(10)).until(CustomConditions.documentStateIsReady());
+
+        setLoginData(driver, user);
+
+        WebElement loginButton = driver.findElement(By.id("login-button"));
+
+        long startTime = System.currentTimeMillis();
+        loginButton.click();
+
+        new WebDriverWait(driver, Duration.ofSeconds(3))
+                .until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.id("contents_wrapper")));
+
+        long endTime = System.currentTimeMillis();
+        long loadDuration = endTime - startTime;
+
+        Assert.assertTrue(loadDuration < 2000);
 
         driver.quit();
     }
