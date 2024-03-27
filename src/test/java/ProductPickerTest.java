@@ -17,69 +17,118 @@ import java.util.List;
 public class ProductPickerTest {
 
     @Test
-    public void test_pick_product() throws InterruptedException {
+    public void test_pick_product() {
         test_pick_product(new ChromeDriver());
         test_pick_product(new EdgeDriver());
     }
 
-    public void test_pick_product(WebDriver driver) throws InterruptedException {
+    @Test
+    public void test_delete_product() {
+        test_delete_product(new ChromeDriver());
+        test_delete_product(new EdgeDriver());
+    }
+
+    private void test_pick_product(WebDriver driver) {
         Util.authorize(driver, ConfigProvider.getUserMap().get(ConfigProvider.userStandard));
 
-        List<WebElement> inventoryItems = new WebDriverWait(driver, Duration.ofSeconds(10))
-                .until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//div[@class='inventory_item']")));
-        WebElement shoppingCardLink;
+        int inventoryItemsCount = new WebDriverWait(driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//div[@class='inventory_item']")))
+                .size();
 
         int pickedInventoryItemsCount = 0;
-        WebElement inventoryItem;
-        List<InventoryItem> pickedInventoryItems = new ArrayList<>();
+        InventoryItem pickedInventoryItem;
+        List<InventoryItem> cardInventoryItems;
 
-        for (int i = 0; i < inventoryItems.size(); i++) {
-            inventoryItems = new WebDriverWait(driver, Duration.ofSeconds(10))
-                    .until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//div[@class='inventory_item']")));
-            inventoryItem = inventoryItems.get(i);
-
-            inventoryItem.findElement(By.tagName("button")).click();
+        for (int i = 0; i < inventoryItemsCount; i++) {
+            pickedInventoryItem = clickInventoryItem(driver, i);
             pickedInventoryItemsCount++;
-            pickedInventoryItems.add(parseInventoryItem(inventoryItem, true));
 
-            shoppingCardLink = driver.findElement(By.xpath("//a[@class='shopping_cart_link']"));
+            Assert.assertTrue(isShoppingCardBadgeCorrect(driver, pickedInventoryItemsCount));
 
-            Assert.assertEquals(pickedInventoryItemsCount, Integer.parseInt(shoppingCardLink.getText()));
+            cardInventoryItems = getCardItems(driver);
 
-            shoppingCardLink.click();
-            checkIfAllPickedItemPresentInShoppingCard(driver, pickedInventoryItems);
-            driver.findElement(By.id("continue-shopping")).click();
+            Assert.assertTrue(cardInventoryItems.contains(pickedInventoryItem));
+            Assert.assertEquals(pickedInventoryItemsCount, cardInventoryItems.size());
         }
 
         driver.quit();
     }
 
+    private void test_delete_product(WebDriver driver) {
+        Util.authorize(driver, ConfigProvider.getUserMap().get(ConfigProvider.userStandard));
+
+        List<WebElement> inventoryItems = new WebDriverWait(driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//div[@class='inventory_item']")));
+
+        int pickedInventoryItemsCount = 0;
+
+        for (int i = 0; i < inventoryItems.size(); i++) {
+            inventoryItems.get(i).findElement(By.tagName("button")).click();
+            pickedInventoryItemsCount++;
+        }
+
+        Assert.assertTrue(isShoppingCardBadgeCorrect(driver, pickedInventoryItemsCount));
+
+        InventoryItem pickedInventoryItem;
+        List<InventoryItem> cardInventoryItems;
+
+        for (int i = 0; i < inventoryItems.size(); i++) {
+            pickedInventoryItem = clickInventoryItem(driver, i);
+            pickedInventoryItemsCount--;
+            cardInventoryItems = getCardItems(driver);
+
+            if (pickedInventoryItemsCount > 0){
+                Assert.assertTrue(isShoppingCardBadgeCorrect(driver, pickedInventoryItemsCount));
+            }
+
+            Assert.assertFalse(cardInventoryItems.contains(pickedInventoryItem));
+        }
+
+        driver.quit();
+    }
+
+    private List<InventoryItem> getCardItems(WebDriver driver) {
+        driver.findElement(By.xpath("//a[@class='shopping_cart_link']")).click();
+
+        List<WebElement> cardInventoryItems = driver.findElements(By.xpath("//div[@class='cart_item']"));
+        List<InventoryItem> inventoryItems = new ArrayList<>();
+
+        if (cardInventoryItems != null) {
+            cardInventoryItems
+                    .forEach(cardInventoryItem -> inventoryItems.add(parseInventoryItem(cardInventoryItem, false)));
+        }
+
+        driver.navigate().back();
+
+        return inventoryItems;
+    }
+
+    private boolean isShoppingCardBadgeCorrect(WebDriver driver, int pickedInventoryItemsCount) {
+        return pickedInventoryItemsCount
+                == Integer.parseInt(driver.findElement(By.xpath("//a[@class='shopping_cart_link']")).getText());
+    }
+
+    private InventoryItem clickInventoryItem(WebDriver driver, int index) {
+        WebElement inventoryItem = new WebDriverWait(driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//div[@class='inventory_item']")))
+                .get(index);
+        inventoryItem.findElement(By.tagName("button")).click();
+
+        return parseInventoryItem(inventoryItem, true);
+    }
+
     private InventoryItem parseInventoryItem(WebElement inventoryItem, boolean isInventoryPage) {
         //because of the mistake in html file of the inventory page
-        String name = isInventoryPage ? inventoryItem.findElement(By.xpath("//div[@class='inventory_item_name ']")).getText()
-                : inventoryItem.findElement(By.xpath("//div[@class='inventory_item_name']")).getText();
+        String name = isInventoryPage ? inventoryItem.findElement(By.xpath(".//div[@class='inventory_item_name ']")).getText()
+                : inventoryItem.findElement(By.xpath(".//div[@class='inventory_item_name']")).getText();
 
         double price = Double.parseDouble(inventoryItem
-                .findElement(By.xpath("//div[@class='inventory_item_price']"))
+                .findElement(By.xpath(".//div[@class='inventory_item_price']"))
                 .getText().replace("$", ""));
 
 
         return new InventoryItem(name,
-                inventoryItem.findElement(By.xpath("//div[@class='inventory_item_desc']")).getText(),
+                inventoryItem.findElement(By.xpath(".//div[@class='inventory_item_desc']")).getText(),
                 price);
-    }
-
-    private void checkIfAllPickedItemPresentInShoppingCard(WebDriver driver, List<InventoryItem> pickedInventoryItems) {
-        List<WebElement> cardItems = new WebDriverWait(driver, Duration.ofSeconds(10))
-                .until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//div[@class='cart_item']")));
-        List<InventoryItem> inventoryItems = new ArrayList<>();
-
-        cardItems.forEach(cardItem -> inventoryItems.add(parseInventoryItem(cardItem, false)));
-
-        pickedInventoryItems.forEach(pickedInventoryItem -> {
-            Assert.assertTrue(inventoryItems.contains(pickedInventoryItem));
-        });
-
-        Assert.assertEquals(cardItems.size(), pickedInventoryItems.size());
     }
 }

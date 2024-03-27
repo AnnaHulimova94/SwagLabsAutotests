@@ -29,4 +29,13 @@ public class InventoryItem {
     public int hashCode() {
         return Objects.hash(getName(), getDescription(), getPrice());
     }
+
+    @Override
+    public String toString() {
+        return "InventoryItem{" +
+                "name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", price=" + price +
+                '}';
+    }
 }
