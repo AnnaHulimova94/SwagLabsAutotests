@@ -16,6 +16,8 @@ public interface ConfigProvider {
 
     String urlInventoryPage = config.getString("url_inventory_page");
 
+    String urlShoppingCardPage = config.getString("url_shopping_card_page");
+
     String userStandard = config.getString("userParams.user_standard.status");
 
     String userLockedOut = config.getString("userParams.user_locked_out.status");
@@ -31,6 +33,12 @@ public interface ConfigProvider {
     String messageUserIsRequired = config.getString("messages.user_is_required");
 
     String messageUserIsLockedOut = config.getString("messages.user_is_locked_out");
+
+    String messagePasswordIsRequired = config.getString("messages.message_password_is_required");
+
+    String messageUsernameIsRequired = config.getString("messages.message_username_is_required");
+
+    String messageUserOrPasswordIncorrect = config.getString("messages.message_user_or_password_incorrect");
 
     Map<String, User> userMap = getUserMap();
 

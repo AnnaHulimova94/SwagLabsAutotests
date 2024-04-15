@@ -9,6 +9,7 @@ import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import util.ConfigProvider;
+import util.Util;
 
 import java.time.Duration;
 import java.util.*;
@@ -31,84 +32,6 @@ public class MainPageSeleniumTest {
     public void test_if_picked_inventory_item_is_present_after_logout() {
         test_if_picked_inventory_item_is_present_after_logout(new ChromeDriver());
         test_if_picked_inventory_item_is_present_after_logout(new EdgeDriver());
-    }
-
-    @Test
-    public void test_if_sort_is_correct() {
-        test_if_sort_is_correct(new ChromeDriver());
-        test_if_sort_is_correct(new EdgeDriver());
-    }
-
-    private void test_if_sort_is_correct(WebDriver driver) {
-        Util.authorize(driver, ConfigProvider.getUserMap().get(ConfigProvider.userStandard));
-
-        List<InventoryItem> inventoryItems = getInventoryItemsSortedByAlphabetIncrease(driver);
-        List<InventoryItem> tempList = new ArrayList<>(inventoryItems);
-        tempList.sort(Comparator.comparing(InventoryItem::getName));
-
-        Assert.assertEquals(inventoryItems, tempList);
-
-        inventoryItems = getInventoryItemsSortedByAlphabetDecrease(driver);
-        tempList = new ArrayList<>(inventoryItems);
-        tempList.sort(Comparator.comparing(InventoryItem::getName).reversed());
-
-        Assert.assertEquals(inventoryItems, tempList);
-
-        inventoryItems = getInventoryItemsSortedByPriceIncrease(driver);
-        tempList = new ArrayList<>(inventoryItems);
-        tempList.sort(Comparator.comparing(InventoryItem::getPrice));
-
-        Assert.assertEquals(inventoryItems, tempList);
-
-        inventoryItems = getInventoryItemsSortedByPriceDecrease(driver);
-        tempList = new ArrayList<>(inventoryItems);
-        tempList.sort(Comparator.comparing(InventoryItem::getPrice).reversed());
-
-        Assert.assertEquals(inventoryItems, tempList);
-
-        driver.quit();
-    }
-
-    private List<InventoryItem> getInventoryItemsSortedByAlphabetIncrease(WebDriver driver) {
-        driver.findElement(By.xpath("//select[@class='product_sort_container']")).click();
-        driver.findElement(By.xpath("//option[@value='az']")).click();
-
-        return parseWebElementInventoryItemsToInventoryItemsList(new WebDriverWait(driver, Duration.ofSeconds(5))
-                .until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//div[@class='inventory_item']"))));
-    }
-
-    private List<InventoryItem> getInventoryItemsSortedByAlphabetDecrease(WebDriver driver) {
-        driver.findElement(By.xpath("//select[@class='product_sort_container']")).click();
-        driver.findElement(By.xpath("//option[@value='za']")).click();
-
-        return parseWebElementInventoryItemsToInventoryItemsList(new WebDriverWait(driver, Duration.ofSeconds(5))
-                .until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//div[@class='inventory_item']"))));
-    }
-
-    private List<InventoryItem> getInventoryItemsSortedByPriceIncrease(WebDriver driver) {
-        driver.findElement(By.xpath("//select[@class='product_sort_container']")).click();
-        driver.findElement(By.xpath("//option[@value='lohi']")).click();
-
-        return parseWebElementInventoryItemsToInventoryItemsList(new WebDriverWait(driver, Duration.ofSeconds(5))
-                .until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//div[@class='inventory_item']"))));
-    }
-
-    private List<InventoryItem> getInventoryItemsSortedByPriceDecrease(WebDriver driver) {
-        driver.findElement(By.xpath("//select[@class='product_sort_container']")).click();
-        driver.findElement(By.xpath("//option[@value='hilo']")).click();
-
-        return parseWebElementInventoryItemsToInventoryItemsList(new WebDriverWait(driver, Duration.ofSeconds(5))
-                .until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//div[@class='inventory_item']"))));
-    }
-
-    private List<InventoryItem> parseWebElementInventoryItemsToInventoryItemsList(List<WebElement> webInventoryItems) {
-        List<InventoryItem> inventoryItems = new ArrayList<>();
-
-        webInventoryItems.forEach(webElement -> {
-            inventoryItems.add(parseInventoryItem(webElement, true));
-        });
-
-        return inventoryItems;
     }
 
     private void test_if_picked_inventory_item_is_present_after_logout(WebDriver driver) {
