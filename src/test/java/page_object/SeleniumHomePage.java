@@ -24,7 +24,6 @@ public class SeleniumHomePage extends AbstractPage {
     private List<WebElement> inventoryItemList;
 
     @FindBy(className = "shopping_cart_link")
-
     private WebElement shoppingCardLink;
 
     @FindBy(id = "react-burger-menu-btn")
